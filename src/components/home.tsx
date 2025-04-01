@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { authenticateWithQRCode } from "@/api/auth";
+import { useToast } from "@/components/ui/use-toast";
 
 // Components
 import DashboardGrid from "./dashboard/DashboardGrid";
@@ -14,19 +17,47 @@ const Home = () => {
   const [activeSection, setActiveSection] = useState<string>("dashboard");
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState<boolean>(true);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const { isAuthenticated, signIn, user } = useAuth();
+  const { toast } = useToast();
 
   // Handle QR code scan success
-  const handleQRScanSuccess = (code: string) => {
-    console.log(`Authentication successful with code: ${code}`);
-    setIsAuthenticated(true);
-    setIsQRScannerOpen(false);
+  const handleQRScanSuccess = async (code: string) => {
+    try {
+      // First authenticate with the QR code to get the user
+      const { user: authUser, error: authError } =
+        await authenticateWithQRCode(code);
+
+      if (authError || !authUser) {
+        throw new Error(authError?.message || "Authentication failed");
+      }
+
+      // Then sign in with Supabase auth
+      const { error } = await signIn(code);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Authentication successful",
+        description: `Welcome back, ${authUser.name}!`,
+      });
+
+      setIsQRScannerOpen(false);
+    } catch (error) {
+      console.error("Authentication error:", error);
+      handleQRScanError((error as Error).message);
+    }
   };
 
   // Handle QR code scan error
   const handleQRScanError = (error: string) => {
     console.error(`Authentication error: ${error}`);
-    // In a real app, you would show an error message to the user
+    toast({
+      title: "Authentication failed",
+      description: error,
+      variant: "destructive",
+    });
   };
 
   // Handle dashboard action selection
@@ -110,6 +141,11 @@ const Home = () => {
       default:
         return <DashboardGrid onActionSelect={handleActionSelect} />;
     }
+  };
+
+  // Get user ID for API calls
+  const getUserId = () => {
+    return user?.id || "anonymous";
   };
 
   return (

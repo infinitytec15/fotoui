@@ -27,53 +27,58 @@ interface MatchResultsProps {
 }
 
 const MatchResults = ({
-  photos = [
-    {
-      id: "1",
-      url: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&q=80",
-      date: "2023-05-15",
-      event: "School Sports Day",
-      matchConfidence: 98,
-    },
-    {
-      id: "2",
-      url: "https://images.unsplash.com/photo-1540479859555-17af45c78602?w=800&q=80",
-      date: "2023-06-10",
-      event: "Graduation Ceremony",
-      matchConfidence: 95,
-    },
-    {
-      id: "3",
-      url: "https://images.unsplash.com/photo-1511949860663-92c5c57d48a7?w=800&q=80",
-      date: "2023-04-22",
-      event: "Science Fair",
-      matchConfidence: 92,
-    },
-    {
-      id: "4",
-      url: "https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?w=800&q=80",
-      date: "2023-03-18",
-      event: "Art Exhibition",
-      matchConfidence: 89,
-    },
-    {
-      id: "5",
-      url: "https://images.unsplash.com/photo-1529390079861-591de354faf5?w=800&q=80",
-      date: "2023-02-05",
-      event: "School Play",
-      matchConfidence: 87,
-    },
-    {
-      id: "6",
-      url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80",
-      date: "2023-01-20",
-      event: "Field Trip",
-      matchConfidence: 84,
-    },
-  ],
+  photos = [],
   onSelectPhoto = () => {},
   isLoading = false,
 }: MatchResultsProps) => {
+  // If no photos are provided, use these default examples
+  const displayPhotos =
+    photos.length > 0
+      ? photos
+      : [
+          {
+            id: "1",
+            url: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&q=80",
+            date: "2023-05-15",
+            event: "School Sports Day",
+            matchConfidence: 98,
+          },
+          {
+            id: "2",
+            url: "https://images.unsplash.com/photo-1540479859555-17af45c78602?w=800&q=80",
+            date: "2023-06-10",
+            event: "Graduation Ceremony",
+            matchConfidence: 95,
+          },
+          {
+            id: "3",
+            url: "https://images.unsplash.com/photo-1511949860663-92c5c57d48a7?w=800&q=80",
+            date: "2023-04-22",
+            event: "Science Fair",
+            matchConfidence: 92,
+          },
+          {
+            id: "4",
+            url: "https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?w=800&q=80",
+            date: "2023-03-18",
+            event: "Art Exhibition",
+            matchConfidence: 89,
+          },
+          {
+            id: "5",
+            url: "https://images.unsplash.com/photo-1529390079861-591de354faf5?w=800&q=80",
+            date: "2023-02-05",
+            event: "School Play",
+            matchConfidence: 87,
+          },
+          {
+            id: "6",
+            url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80",
+            date: "2023-01-20",
+            event: "Field Trip",
+            matchConfidence: 84,
+          },
+        ];
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [hoveredPhoto, setHoveredPhoto] = useState<string | null>(null);
 
@@ -86,7 +91,7 @@ const MatchResults = ({
   };
 
   const handleAddToCart = () => {
-    const photosToAdd = photos.filter((photo) =>
+    const photosToAdd = displayPhotos.filter((photo) =>
       selectedPhotos.includes(photo.id),
     );
     console.log("Adding to cart:", photosToAdd);
@@ -116,7 +121,7 @@ const MatchResults = ({
         </p>
       </div>
 
-      {photos.length === 0 ? (
+      {displayPhotos.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-lg text-gray-500">
             No matching photos found. Try uploading a different photo.
@@ -125,7 +130,7 @@ const MatchResults = ({
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {photos.map((photo) => (
+            {displayPhotos.map((photo) => (
               <motion.div
                 key={photo.id}
                 whileHover={{ scale: 1.02 }}

@@ -54,6 +54,12 @@ const PhotoUploader = ({
       return;
     }
 
+    // Check file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size exceeds 10MB limit");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;

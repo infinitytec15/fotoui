@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Search, Info, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -18,9 +18,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useToast } from "@/components/ui/use-toast";
 
 import PhotoUploader from "./PhotoUploader";
 import MatchResults from "./MatchResults";
+import { matchFacesAPI } from "@/api/photos";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FacialRecognitionPanelProps {
   onPhotoSelected?: (file: File, previewUrl: string) => void;
@@ -31,13 +34,17 @@ interface FacialRecognitionPanelProps {
 const FacialRecognitionPanel = ({
   onPhotoSelected = () => {},
   onMatchFound = () => {},
-  isProcessing = false,
+  isProcessing: externalProcessing = false,
 }: FacialRecognitionPanelProps) => {
   const [activeTab, setActiveTab] = useState("upload");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [showResults, setShowResults] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(externalProcessing);
+  const [matchedPhotos, setMatchedPhotos] = useState<any[]>([]);
+  const { toast } = useToast();
+  const { user } = useAuth();
 
   // Simulate processing progress
   React.useEffect(() => {
@@ -57,11 +64,40 @@ const FacialRecognitionPanel = ({
     }
   }, [isProcessing, processingProgress]);
 
-  const handlePhotoSelected = (file: File, preview: string) => {
+  const handlePhotoSelected = async (file: File, preview: string) => {
     setSelectedFile(file);
     setPreviewUrl(preview);
     setProcessingProgress(0);
+    setIsProcessing(true);
     onPhotoSelected(file, preview);
+
+    try {
+      // Process the photo with facial recognition
+      const userId = user?.id || "anonymous";
+      const { matches, error } = await matchFacesAPI(file, userId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update the matched photos
+      setMatchedPhotos(matches);
+      onMatchFound(matches);
+
+      // Show the results tab
+      setShowResults(true);
+      setActiveTab("results");
+    } catch (error) {
+      console.error("Error processing photo:", error);
+      toast({
+        title: "Error processing photo",
+        description: (error as Error).message || "An unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+      setProcessingProgress(100);
+    }
   };
 
   const handlePhotoRemoved = () => {
